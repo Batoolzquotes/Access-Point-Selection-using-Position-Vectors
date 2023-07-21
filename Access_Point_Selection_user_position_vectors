@@ -1,0 +1,146 @@
+
+AP_num = 1;
+AP_init_num = 3;
+test_num = 110*35;
+m = 22;
+n =11;
+a(1,1)  = 0.5;
+a(1,2)  = 0.5;
+% specify Transmit power
+power_trans = 24;
+nh = 2.3;   % Indoor attenuation factor
+M = 2;      % path loss coefficients
+loss_a = 3.1;
+N = 2;
+loss_b = 3.1;
+U = 9;
+for i =1:m
+    for j = 1:3
+        k = (j-1)*22 +i;
+        a(k,1) = 0.5 + 2*(i-1);
+        a(k,2) = 0.5 + 2*(j-1);
+    end
+end
+
+for i = 1:22
+    for j = 1:2
+        p = (2+j)*22 + i;
+        q = 2*22 + i;
+        a(p,1) = a(q,1);
+        a(p,2) = a(q,2) + 1*j;
+    end
+end
+for i = 1:22
+    for j = 1:2
+        p = 4*22 + i;                 
+        q = (4+j)*22 + i;
+        a(q,1) = a(p,1);
+        a(q,2) = a(p,2) + 2*j;
+    end
+end     
+RP_loc = a;  
+AP_loc_init(:,1) = [2 5];
+AP_loc_init(:,2) = [14 5];
+AP_loc_init(:,3) = [8 25];
+
+select_APs = 3;
+for u = 1:U
+        temp_user(u,:) = [local_real(u,1),local_real(u,2)];
+end
+
+for i = AP_init_num+1:AP_num
+    AP_loc(:,i) = deployed_AP(Deployed_AP); %taking deployed AP location from main program
+end
+for i = 1:select_APs
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+AP_RSSI = RSSI_based(temp_user);
+AP_pvec = pvec_based(P);
+
+[AP_RSSI,AP_pvec] = selected_APs(AP_selectedR,AP_selectedPV);
+end
+for i = 1:select_APs  %Different sets of APs for each selection so distance and path loss defined for each
+    for j =1:154
+        dis_a = sqrt((RP_loc(j,1) - AP_loc_init(1,i))^2 + (RP_loc(j,2) - AP_loc_init(2,i))^2);
+        path_loss_a(i,j) = MWF_model_a(M,loss_a,N,loss_b,dis_a,nh);
+        power_rec_a(i,j) = power_trans - path_loss_a(i,j) + lognrnd(0.1,1);
+    end
+end
+for i = 1:select_APs
+    for j =1:154
+        dis_b = sqrt((RP_loc(j,1) - AP_RSSI(1,i))^2 + (RP_loc(j,2) - AP_RSSI(2,i))^2);
+        path_loss_b(i,j) = MWF_model_b(M,loss_a,N,loss_b,dis_b,nh);
+        power_rec_b(i,j) = power_trans - path_loss_b(i,j) + lognrnd(0.1,1);
+    end
+end
+for i = 1:select_APs
+    for j =1:154
+        dis_c = sqrt((RP_loc(j,1) - AP_pvec(1,i))^2 + (RP_loc(j,2) - AP_pvec(2,i))^2);
+        path_loss_c(i,j) = MWF_model_c(M,loss_a,N,loss_b,dis_c,nh);
+        power_rec_c(i,j) = power_trans - path_loss_c(i,j) + lognrnd(0.1,1);
+    end
+end
+test_num = 110*35;
+for i = 1:test_num
+%random_user_locs.m
+%  l_y(i) = floor(i/110);
+%  l_x(i) = mod(i,35);
+% pos_x(i) = normrnd(21,6);
+% pos_y(i) = normrnd(4,5);
+for u = 1:U
+pos_x = 21 + 15.*randn(U,1);
+pos_y = 4 + 15.*randn(U,1);
+
+    local_real(u,1) = pos_x(u);
+    local_real(u,2) = pos_y(u);
+%         local_real_u(u,1,:) = pos_x_u(u);
+%         local_real_u(u,2,:) = pos_y_u(u);
+end
+
+    for j = 1:select_APs
+        dis_real_a = sqrt((local_real(u,1) - AP_loc_init(1,j)).^2 + (local_real(u,1) - AP_loc_init(2,j)).^2);
+        path_loss_real_a(i,j) = MWF_model_a(M,loss_a,N,loss_b,dis_real_a,nh);
+        power_rec_real_a(i,j) = power_trans - path_loss_real_a(i,j) + lognrnd(0.1,1);
+    end
+    for j = 1:select_APs 
+        dis_real_b = sqrt((local_real(u,1) - AP_RSSI(1,j))^2 + (local_real(u,2) - AP_RSSI(2,j))^2);
+        path_loss_real_b(i,j) = MWF_model_b(M,loss_a,N,loss_b,dis_real_b,nh);
+        power_rec_real_b(i,j) = power_trans - path_loss_real_b(i,j) + lognrnd(0.1,1);
+    end
+    for j = 1:select_APs
+        dis_real_c = sqrt((local_real(u,1) - AP_pvec(1,j))^2 + (local_real(u,2) - AP_pvec(2,j))^2);
+        path_loss_real_c(i,j) = MWF_model_c(M,loss_a,N,loss_b,dis_real_c,nh);
+        power_rec_real_c(i,j) = power_trans - path_loss_real_c(j) + lognrnd(0.1,1);
+    end
+   
+     
+
+    for u = 1:U
+        temp_user(u,:) = [local_real(u,1),local_real(u,2)];
+    end
+%     temp_user=[local_real(u,1) local_real(u,2)];
+    K =3;
+    
+    local_error(i) = knn_algorithm_comp_a(RP_loc,power_rec_a,power_rec_real_a,temp_user,K,U,select_APs);
+    local_error_AP_R(i) = knn_algorithm_comp_b(RP_loc,power_rec_b,power_rec_real_b,temp_user,K,U,select_APs);
+    local_error_AP_PV(i) = knn_algorithm_comp_c(RP_loc,power_rec_c,power_rec_real_c,temp_user,K,U,select_APs);
+
+end
+   
+
+
+
+%CDF plots
+figure (7)
+h(1) = cdfplot(local_error);
+set(h(1),'Color','b')
+hold on
+h(2) = cdfplot(local_error_AP_R);
+set(h(2),'Color','m')
+hold on
+h(3) = cdfplot(local_error_AP_PV);
+set(h(3),'Color','r')
+hold on
+legend('Initial APs','P-vec based selected','RSSI-based selected')
+xlabel('x (meters)');
+ylabel('F(x)');
